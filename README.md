@@ -24,7 +24,7 @@ Since the official Polestar App does not support any kind of widgets for iOS, I 
 2. There are two options to install the widget:
     - [*Recommended*] Click on the following button to install via `ScriptDude`
 
-        [![Download with ScriptDude](https://scriptdu.de/download.svg)](https://scriptdu.de/?name=Polestar Lockscreen SoC Widget&source=https%3A%2F%2Fraw.githubusercontent.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fmain%2Fpolestar-medium-widget.js&docs=https%3A%2F%2Fgithub.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fblob%2Fmain%2FREADME.md)
+        [![Download with ScriptDude](https://scriptdu.de/download.svg)](https://scriptdu.de/?name=Polestar%20Lockscreen&20SoC%20Widget&source=https%3A%2F%2Fraw.githubusercontent.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fmain%2Fpolestar-medium-widget.js&docs=https%3A%2F%2Fgithub.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fblob%2Fmain%2FREADME.md)
     - Copy the content of [./polestar-lockscreen-widget.js](./polestar-lockscreen-widget.js), create a new script in `Scriptable` and paste the content.
 
 3. Replace the placeholder values for `TIBBER_EMAIL` and `TIBBER_PASSWORD` with your Tibber login credentials.
