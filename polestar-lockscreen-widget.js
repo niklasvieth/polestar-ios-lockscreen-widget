@@ -1,3 +1,5 @@
+// icon-color: green; icon-glyph: battery-half;
+
 /**
  * This widget has been developed by Niklas Vieth.
  * Installation and configuration details can be found at https://github.com/niklasvieth/polestar-ios-lockscreen-widget
