@@ -52,3 +52,9 @@ There might be a minor lag or difference of the SoC compared to value displayed 
 
 - Thanks @simonbs for the awesome [Scriptable](https://scriptable.app/) app.
 - Thanks @Sillium for the [ProgressCircleService.js](https://gist.github.com/Sillium/4210779bc2d759b494fa60ba4f464bd8#file-progresscircleservice-js) which I am reusing.
+
+### Support me
+
+<a href="https://www.paypal.me/niklasvieth" >
+  <img src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" width="200px" />
+</a>
