@@ -12,6 +12,14 @@ const TIBBER_PASSWORD = "<PASSWORD>";
 const TIBBER_BASE_URL = "https://app.tibber.com";
 const POLESTAR_ICON = "https://www.polestar.com/w3-assets/coast-228x228.png";
 
+// Check that params are set
+if (TIBBER_EMAIL === "<EMAIL_ADDRESS>") {
+  throw new Error("Parameter TIBBER_EMAIL is not configured");
+}
+if (TIBBER_PASSWORD === "<PASSWORD>") {
+  throw new Error("Parameter TIBBER_PASSWORD is not configured");
+}
+
 // Create Widget
 const tibberData = await fetchTibberData();
 const percent = tibberData.battery.percent;

@@ -15,17 +15,17 @@ Since the official Polestar App does not support any kind of widgets for iOS, I 
     - Install [Tibber App](https://apps.apple.com/de/app/tibber-%C3%B6kostrom/id1127805969) on your iPhone and follow the registration instructions. Make sure to remember the email & password used to create the Tibber account.
     - [Configure Polestar Power-Up](https://support.tibber.com/en/articles/6675026-smart-charge-your-polestar-with-tibber#:~:text=How%20do%20I%20connect%20my%20Polestar%20to%20Tibber%3F)
 2. Install [Scriptable](https://apps.apple.com/de/app/scriptable/id1405459188) on your iPhone
-3. Follow the [ScriptDude installation steps](https://scriptdu.de/#installation)
+3. [Optional but recommended] Follow the [ScriptDude installation steps](https://scriptdu.de/#installation)
 
 ## Installation
 
-1. Make sure you have followed all steps described in [Prerequisites](./README.md#Prerequisites).
+1. Make sure you have followed all mandatory steps described in [Prerequisites](./README.md#Prerequisites).
 
 2. There are two options to install the widget:
-    - [*Recommended*] Click on the following button to install via `ScriptDude`
+    - [Recommended] Click on the following button to install via `ScriptDude` (make sure that you have followed step 3 of [Prerequisites](./README.md#Prerequisites)). ScriptDude will automatically receive updates of new versions of this widget
 
-        [![Download with ScriptDude](https://scriptdu.de/download.svg)](https://scriptdu.de/?name=Polestar+Lockscreen+Widget&source=https%3A%2F%2Fraw.githubusercontent.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fmain%2Fpolestar-lockscreen-widget.js&docs=https%3A%2F%2Fgithub.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fblob%2Fmain%2FREADME.md)
-    - Copy the content of [./polestar-lockscreen-widget.js](./polestar-lockscreen-widget.js), create a new script in `Scriptable` and paste the content.
+        [![Download with ScriptDude](https://scriptdu.de/download.svg)](https://scriptdu.de/?name=Polestar%20Lockscreen%20SoC%20Widget&source=https%3A%2F%2Fgist.githubusercontent.com%2Fniklasvieth%2F9cb306b53835a9a283e34b77f0f2513f%2Fraw%2Ff5e29c99e8cc017c0d4fa2f8e825f79031282a2a%2Fpolestar-lockscreen-widget.js&docs=https%3A%2F%2Fgithub.com%2Fniklasvieth%2Fpolestar-ios-lockscreen-widget%2Fblob%2Fmain%2FREADME.md#generator&color=green&icon=battery-half)
+    - Copy the content of [polestar-lockscreen-widget.js](https://gist.github.com/niklasvieth/9cb306b53835a9a283e34b77f0f2513f), create a new script in `Scriptable`, paste the content and rename it to `Polestar Lockscreen SoC Widget`.
 
 3. Replace the placeholder values for `TIBBER_EMAIL` and `TIBBER_PASSWORD` with your Tibber login credentials.
 
