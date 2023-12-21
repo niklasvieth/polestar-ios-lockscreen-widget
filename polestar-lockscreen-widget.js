@@ -6,27 +6,35 @@
  */
 
 // Config
-const TIBBER_EMAIL = "<EMAIL_ADDRESS>";
-const TIBBER_PASSWORD = "<PASSWORD>";
+const POLESTAR_EMAIL = "EMAIL_ADDRESS";
+const POLESTAR_PASSWORD = "PASSWORD";
+const VIN = "VIN";
 
-const TIBBER_BASE_URL = "https://app.tibber.com";
 const POLESTAR_ICON = "https://www.polestar.com/w3-assets/coast-228x228.png";
 
 // Check that params are set
-if (TIBBER_EMAIL === "<EMAIL_ADDRESS>") {
-  throw new Error("Parameter TIBBER_EMAIL is not configured");
+if (POLESTAR_EMAIL === "EMAIL_ADDRESS") {
+  throw new Error("Parameter POLESTAR_EMAIL is not configured");
 }
-if (TIBBER_PASSWORD === "<PASSWORD>") {
-  throw new Error("Parameter TIBBER_PASSWORD is not configured");
+if (POLESTAR_PASSWORD === "PASSWORD") {
+  throw new Error("Parameter POLESTAR_PASSWORD is not configured");
+}
+if (VIN === "VIN") {
+  throw new Error("Parameter VIN is not configured");
 }
 
 // Create Widget
-const tibberData = await fetchTibberData();
-const percent = tibberData.battery.percent;
+const accessToken = await getAccessToken();
+const batteryData = await getBattery(accessToken);
+const batteryPercent = parseInt(batteryData.batteryChargeLevelPercentage);
+const isCharging = batteryData.chargingStatus === "CHARGING_STATUS_CHARGING";
+const isChargingDone = batteryData.chargingStatus === "CHARGING_STATUS_DONE";
+const isConnected =
+  batteryData.chargerConnectionStatus === "CHARGER_CONNECTION_STATUS_CONNECTED";
 
 const widget = new ListWidget();
 widget.url = "polestar-explore://";
-const progressStack = await drawArc(widget, percent);
+const progressStack = await drawArc(widget, batteryPercent, isCharging);
 
 const batteryInfoStack = progressStack.addStack();
 batteryInfoStack.layoutVertically();
@@ -34,10 +42,25 @@ batteryInfoStack.layoutVertically();
 // Polestar Icon
 const imageStack = batteryInfoStack.addStack();
 imageStack.addSpacer();
-const appIcon = await loadImage(POLESTAR_ICON);
-const icon = imageStack.addImage(appIcon);
-icon.imageSize = new Size(13, 13);
-icon.cornerRadius = 4;
+
+if (isCharging || isChargingDone) {
+  const chargingIcon = isCharging
+    ? SFSymbol.named("bolt.fill")
+    : SFSymbol.named("checkmark.circle");
+  const chargingSymbolElement = imageStack.addImage(chargingIcon.image);
+  chargingSymbolElement.tintColor = Color.green();
+  chargingSymbolElement.imageSize = new Size(15, 15);
+} else if (isConnected) {
+  const chargingIcon = SFSymbol.named("bolt.slash.fill");
+  const chargingSymbolElement = imageStack.addImage(chargingIcon.image);
+  chargingSymbolElement.tintColor = Color.red();
+  chargingSymbolElement.imageSize = new Size(15, 15);
+} else {
+  const appIcon = await loadImage(POLESTAR_ICON);
+  const icon = imageStack.addImage(appIcon);
+  icon.imageSize = new Size(13, 13);
+  icon.cornerRadius = 4;
+}
 imageStack.addSpacer();
 
 // Percent Text
@@ -45,55 +68,128 @@ batteryInfoStack.addSpacer(2);
 const textStack = batteryInfoStack.addStack();
 textStack.centerAlignContent();
 textStack.addSpacer();
-textStack.addText(`${percent}%`);
+textStack.addText(`${batteryPercent}%`);
 textStack.addSpacer();
 
 widget.presentAccessoryCircular();
 Script.setWidget(widget);
 Script.complete();
 
-/********************
- * Tibber API helpers
- ********************/
-async function fetchTibberToken() {
-  const tokenUrl = `${TIBBER_BASE_URL}/login.credentials`;
-  const body = {
-    "@type": "login",
-    email: TIBBER_EMAIL,
-    password: TIBBER_PASSWORD,
-  };
-  const req = new Request(tokenUrl);
-  req.method = "POST";
-  req.body = JSON.stringify(body);
-  req.headers = {
-    "Content-Type": "application/json",
-    charset: "utf-8",
-  };
-  const response = await req.loadJSON();
-  return response.token;
+/**********************
+ * Polestar API helpers
+ **********************/
+async function getAccessToken() {
+  const { pathToken, cookie } = await getLoginFlowTokens();
+  const tokenRequestCode = await performLogin(pathToken, cookie);
+  const apiCreds = await getApiToken(tokenRequestCode);
+  return apiCreds.access_token;
 }
 
-async function fetchTibberData() {
-  const tibberToken = await fetchTibberToken();
-  const url = `${TIBBER_BASE_URL}/v4/gql`;
-  const body = {
-    query: "{me{homes{electricVehicles{battery{percent}}}}}",
+async function performLogin(pathToken, cookie) {
+  const req = new Request(
+    `https://polestarid.eu.polestar.com/as/${pathToken}/resume/as/authorization.ping`
+  );
+  req.method = "post";
+  req.body = getUrlEncodedParams({
+    "pf.username": POLESTAR_EMAIL,
+    "pf.pass": POLESTAR_PASSWORD,
+  });
+  req.headers = {
+    "Content-Type": "application/x-www-form-urlencoded",
+    Cookie: cookie,
   };
-  const req = new Request(url);
+  req.onRedirect = (redReq) => {
+    return null;
+  };
+  await req.load();
+  const redirectUrl = req.response.headers.Location;
+  const regex = /code=([^&]+)/;
+  const match = redirectUrl.match(regex);
+  const tokenRequestCode = match ? match[1] : null;
+  return tokenRequestCode;
+}
+
+async function getLoginFlowTokens() {
+  const req = new Request(
+    "https://polestarid.eu.polestar.com/as/authorization.oauth2?response_type=code&client_id=polmystar&redirect_uri=https://www.polestar.com%2Fsign-in-callback&scope=openid+profile+email+customer%3Aattributes"
+  );
+  req.headers = { Cookie: "" };
+  let redirectUrl;
+  req.onRedirect = (redReq) => {
+    redirectUrl = redReq.url;
+    return null;
+  };
+  await req.loadString();
+  const regex = /resumePath=(\w+)/;
+  const match = redirectUrl.match(regex);
+  const pathToken = match ? match[1] : null;
+  const cookies = req.response.headers["Set-Cookie"];
+  const cookie = cookies.split("; ")[0] + ";";
+  return {
+    pathToken: pathToken,
+    cookie: cookie,
+  };
+}
+
+async function getApiToken(tokenRequestCode) {
+  const req = new Request("https://pc-api.polestar.com/eu-north-1/auth");
   req.method = "POST";
-  req.body = JSON.stringify(body);
   req.headers = {
     "Content-Type": "application/json",
-    charset: "utf-8",
-    Authorization: `Bearer ${tibberToken}`,
+  };
+  req.body = JSON.stringify({
+    query:
+      "query getAuthToken($code: String!){getAuthToken(code: $code){id_token,access_token,refresh_token,expires_in}}",
+    operationName: "getAuthToken",
+    variables: { code: tokenRequestCode },
+  });
+  req.onRedirect = (redReq) => {
+    return null;
   };
   const response = await req.loadJSON();
-  return response.data.me.homes[0].electricVehicles[0];
+  const apiCreds = response.data.getAuthToken;
+  return {
+    access_token: apiCreds.access_token,
+    refresh_token: apiCreds.refresh_token,
+    expires_in: apiCreds.expires_in,
+  };
+}
+
+async function getBattery(accessToken) {
+  if (!accessToken) {
+    throw new Error("Not authenticated");
+  }
+  const searchParams = {
+    query:
+      "query GetBatteryData($vin:String!){getBatteryData(vin:$vin){averageEnergyConsumptionKwhPer100Km,batteryChargeLevelPercentage,chargerConnectionStatus,chargingCurrentAmps,chargingPowerWatts,chargingStatus,estimatedChargingTimeMinutesToTargetDistance,estimatedChargingTimeToFullMinutes,estimatedDistanceToEmptyKm,estimatedDistanceToEmptyMiles,eventUpdatedTimestamp{iso,unix}}}",
+    variables: {
+      vin: VIN,
+    },
+  };
+  const req = new Request("https://pc-api.polestar.com/eu-north-1/my-star");
+  req.method = "POST";
+  req.headers = {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + accessToken,
+  };
+  req.body = JSON.stringify(searchParams);
+  const response = await req.loadJSON();
+  if (!response?.data?.getBatteryData) {
+    throw new Error("No battery data fetched");
+  }
+  const data = response.data.getBatteryData;
+  return data;
 }
 
 async function loadImage(url) {
   const req = new Request(url);
   return req.loadImage();
+}
+
+function getUrlEncodedParams(object) {
+  return Object.keys(object)
+    .map((key) => `${key}=${encodeURIComponent(object[key])}`)
+    .join("&");
 }
 
 /*****************************
