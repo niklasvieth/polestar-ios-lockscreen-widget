@@ -10,6 +10,8 @@ const POLESTAR_EMAIL = "EMAIL_ADDRESS";
 const POLESTAR_PASSWORD = "PASSWORD";
 const VIN = "VIN";
 
+const POLESTAR_BASE_URL = "https://pc-api.polestar.com/eu-north-1";
+const POLESTAR_API_URL = `${POLESTAR_BASE_URL}/mystar-v2`; // v1 API: "https://pc-api.polestar.com/eu-north-1/my-star"
 const POLESTAR_ICON = "https://www.polestar.com/w3-assets/coast-228x228.png";
 
 // Check that params are set
@@ -132,7 +134,7 @@ async function getLoginFlowTokens() {
 }
 
 async function getApiToken(tokenRequestCode) {
-  const req = new Request("https://pc-api.polestar.com/eu-north-1/auth");
+  const req = new Request(`${POLESTAR_BASE_URL}/auth`);
   req.method = "POST";
   req.headers = {
     "Content-Type": "application/json",
@@ -166,7 +168,7 @@ async function getBattery(accessToken) {
       vin: VIN,
     },
   };
-  const req = new Request("https://pc-api.polestar.com/eu-north-1/my-star");
+  const req = new Request(POLESTAR_API_URL);
   req.method = "POST";
   req.headers = {
     "Content-Type": "application/json",
