@@ -8,6 +8,8 @@ An iOS lockscreen widget to display the current state of charge (SoC) of your Po
 
 Since the official Polestar App does not support any kind of widgets for iOS, I developed my own with the help of [Scriptable](https://scriptable.app/). It uses the official Polestar API which is also used to display the battery status in your profile at https://www.polestar.com.
 
+> This widget is a hobby project and the developed code is not affiliated with Polestar AB or any Volvo company or any subsidiary or affiliate of any of the aforementioned companies. 
+
 ## Prerequisites
 
 1. Polestar Account login credentials which should work at https://polestarid.eu.polestar.com/PolestarLogin/ and VIN of your car.
@@ -66,6 +68,8 @@ The icon has 4 different states.
 - Thanks @Sillium for the [ProgressCircleService.js](https://gist.github.com/Sillium/4210779bc2d759b494fa60ba4f464bd8#file-progresscircleservice-js) which I am reusing.
 
 ### Support me
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/niklasvieth)
 
 <a href="https://www.paypal.me/niklasvieth" >
   <img src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" width="200px" />
