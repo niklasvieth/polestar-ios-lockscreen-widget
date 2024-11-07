@@ -6,7 +6,7 @@
  */
 
 // Config
-const POLESTAR_EMAIL = "EMAIL_ADDRESS";
+const POLESTAR_EMAIL = "EMAIL";
 const POLESTAR_PASSWORD = "PASSWORD";
 const VIN = "VIN";
 
