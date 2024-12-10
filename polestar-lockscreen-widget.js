@@ -8,12 +8,18 @@
 // Config
 const POLESTAR_EMAIL = "EMAIL";
 const POLESTAR_PASSWORD = "PASSWORD";
-const VIN = "VIN";
+let VIN;
+// let VIN = "VIN";
 
+// API config
 const POLESTAR_BASE_URL = "https://pc-api.polestar.com/eu-north-1";
-const POLESTAR_API_URL = `${POLESTAR_BASE_URL}/mystar-v2`; // v1 API: "https://pc-api.polestar.com/eu-north-1/my-star"
+const POLESTAR_API_URL_V2 = `${POLESTAR_BASE_URL}/mystar-v2`;
+const POLESTAR_API_URL = `${POLESTAR_BASE_URL}/my-star`;
+const POLESTAR_REDIRECT_URI = "https://www.polestar.com/sign-in-callback";
 const POLESTAR_ICON = "https://www.polestar.com/w3-assets/coast-228x228.png";
 const CLIENT_ID = "l3oopkc_10";
+const CODE_VERIFIER = "polestar-ios-widgets-are-enabled-by-scriptable";
+const CODE_CHALLENGE = "adYJTSAVqq6CWBJn7yNdGKwcsmJb8eBewG8WpxnUzaE";
 
 // Check that params are set
 if (POLESTAR_EMAIL === "EMAIL_ADDRESS") {
@@ -28,6 +34,7 @@ if (VIN === "VIN") {
 
 // Create Widget
 const accessToken = await getAccessToken();
+const vehicleData = await getVehicles(accessToken);
 const batteryData = await getBattery(accessToken);
 const batteryPercent = parseInt(batteryData.batteryChargeLevelPercentage);
 const isCharging = batteryData.chargingStatus === "CHARGING_STATUS_CHARGING";
@@ -90,7 +97,7 @@ async function getAccessToken() {
 
 async function performLogin(pathToken, cookie) {
   const req = new Request(
-    `https://polestarid.eu.polestar.com/as/${pathToken}/resume/as/authorization.ping`
+    `https://polestarid.eu.polestar.com/as/${pathToken}/resume/as/authorization.ping?client_id=${CLIENT_ID}`
   );
   req.method = "post";
   req.body = getUrlEncodedParams({
@@ -115,7 +122,7 @@ async function performLogin(pathToken, cookie) {
     if (uidMatch && uidMatch.length > 0) {
       const uid = uidMatch[1];
       const reqConfirm = new Request(
-        `https://polestarid.eu.polestar.com/as/${pathToken}/resume/as/authorization.ping`
+        `https://polestarid.eu.polestar.com/as/${pathToken}/resume/as/authorization.ping?client_id=${CLIENT_ID}`
       );
       reqConfirm.method = "post";
       reqConfirm.body = getUrlEncodedParams({
@@ -145,8 +152,17 @@ async function performLogin(pathToken, cookie) {
 }
 
 async function getLoginFlowTokens() {
+  const params = getUrlEncodedParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    redirect_uri: POLESTAR_REDIRECT_URI,
+    scope: "openid profile email customer:attributes",
+    state: "ea5aa2860f894a9287a4819dd5ada85c",
+    code_challenge: CODE_CHALLENGE,
+    code_challenge_method: "S256",
+  });
   const req = new Request(
-    `https://polestarid.eu.polestar.com/as/authorization.oauth2?response_type=code&client_id=${CLIENT_ID}&redirect_uri=https://www.polestar.com%2Fsign-in-callback&scope=openid+profile+email+customer%3Aattributes`
+    `https://polestarid.eu.polestar.com/as/authorization.oauth2?${params}`
   );
   req.headers = { Cookie: "" };
   let redirectUrl;
@@ -167,22 +183,24 @@ async function getLoginFlowTokens() {
 }
 
 async function getApiToken(tokenRequestCode) {
-  const req = new Request(`${POLESTAR_BASE_URL}/auth`);
+  const req = new Request(`https://polestarid.eu.polestar.com/as/token.oauth2`);
   req.method = "POST";
   req.headers = {
-    "Content-Type": "application/json",
+    "Content-Type": "application/x-www-form-urlencoded",
   };
-  req.body = JSON.stringify({
-    query:
-      "query getAuthToken($code: String!){getAuthToken(code: $code){id_token,access_token,refresh_token,expires_in}}",
-    operationName: "getAuthToken",
-    variables: { code: tokenRequestCode },
+
+  req.body = getUrlEncodedParams({
+    grant_type: "authorization_code",
+    code: tokenRequestCode,
+    code_verifier: CODE_VERIFIER,
+    client_id: CLIENT_ID,
+    redirect_uri: POLESTAR_REDIRECT_URI,
   });
+
   req.onRedirect = (redReq) => {
     return null;
   };
-  const response = await req.loadJSON();
-  const apiCreds = response.data.getAuthToken;
+  const apiCreds = await req.loadJSON();
   return {
     access_token: apiCreds.access_token,
     refresh_token: apiCreds.refresh_token,
@@ -201,7 +219,7 @@ async function getBattery(accessToken) {
       vin: VIN,
     },
   };
-  const req = new Request(POLESTAR_API_URL);
+  const req = new Request(POLESTAR_API_URL_V2);
   req.method = "POST";
   req.headers = {
     "Content-Type": "application/json",
@@ -214,6 +232,36 @@ async function getBattery(accessToken) {
   }
   const data = response.data.getBatteryData;
   return data;
+}
+
+async function getVehicles(accessToken) {
+  if (!accessToken) {
+    throw new Error("Not authenticated");
+  }
+  const searchParams = {
+    query:
+      "query getCars{getConsumerCarsV2{vin,internalVehicleIdentifier,modelYear,content{model{code,name},images,{studio,{url,angles}}},hasPerformancePackage,registrationNo,deliveryDate,currentPlannedDeliveryDate}}",
+    variables: {},
+  };
+  const req = new Request(POLESTAR_API_URL_V2);
+  req.method = "POST";
+  req.headers = {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + accessToken,
+  };
+  req.body = JSON.stringify(searchParams);
+  const response = await req.loadJSON();
+  const vehicleData = response?.data?.getConsumerCarsV2;
+  if (!vehicleData) {
+    throw new Error("No vehicle data fetched");
+  }
+  const vehicle =
+    vehicleData.find((vehicle) => vehicle.vin === VIN) ?? vehicleData[0];
+  if (!vehicle) {
+    throw new Error(`No vehicle found with VIN ${VIN}`);
+  }
+  VIN = vehicle.vin;
+  return vehicle;
 }
 
 async function loadImage(url) {
