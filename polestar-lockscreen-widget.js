@@ -35,7 +35,8 @@ if (VIN === "VIN") {
 // Create Widget
 const accessToken = await getAccessToken();
 const vehicleData = await getVehicles(accessToken);
-const batteryData = await getBattery(accessToken);
+const telematicData = await getTelematics(accessToken);
+const batteryData = telematicData.carTelematics.battery;
 const batteryPercent = parseInt(batteryData.batteryChargeLevelPercentage);
 const isCharging = batteryData.chargingStatus === "CHARGING_STATUS_CHARGING";
 const isChargingDone = batteryData.chargingStatus === "CHARGING_STATUS_DONE";
@@ -208,13 +209,13 @@ async function getApiToken(tokenRequestCode) {
   };
 }
 
-async function getBattery(accessToken) {
+async function getTelematics(accessToken) {
   if (!accessToken) {
     throw new Error("Not authenticated");
   }
   const searchParams = {
     query:
-      "query GetBatteryData($vin:String!){getBatteryData(vin:$vin){averageEnergyConsumptionKwhPer100Km,batteryChargeLevelPercentage,chargerConnectionStatus,chargingCurrentAmps,chargingPowerWatts,chargingStatus,estimatedChargingTimeMinutesToTargetDistance,estimatedChargingTimeToFullMinutes,estimatedDistanceToEmptyKm,estimatedDistanceToEmptyMiles,eventUpdatedTimestamp{iso,unix}}}",
+      "query CarTelematics($vin:String!) { carTelematics(vin: $vin) { battery { averageEnergyConsumptionKwhPer100Km,batteryChargeLevelPercentage,chargerConnectionStatus,chargingCurrentAmps,chargingPowerWatts,chargingStatus,estimatedChargingTimeMinutesToTargetDistance,estimatedChargingTimeToFullMinutes,estimatedDistanceToEmptyKm,estimatedDistanceToEmptyMiles,eventUpdatedTimestamp{iso,unix}}, odometer { averageSpeedKmPerHour,eventUpdatedTimestamp,{iso,unix},odometerMeters,tripMeterAutomaticKm,tripMeterManualKm}}}",
     variables: {
       vin: VIN,
     },
@@ -227,11 +228,10 @@ async function getBattery(accessToken) {
   };
   req.body = JSON.stringify(searchParams);
   const response = await req.loadJSON();
-  if (!response?.data?.getBatteryData) {
-    throw new Error("No battery data fetched");
+  if (!response?.data) {
+    throw new Error("No telematics data fetched");
   }
-  const data = response.data.getBatteryData;
-  return data;
+  return response.data;
 }
 
 async function getVehicles(accessToken) {
