@@ -1,5 +1,8 @@
 # Polestar SoC iOS Lockscreen Widget
 
+> [!NOTE]  
+> This repository is no longer maintained, since the official lockscreen widget of the Polestar app has been released and covers the same functionality.
+
 An iOS lockscreen widget to display the current state of charge (SoC) of your Polestar.
 
 <img src="./images/polestar_lockscreen_widget.jpeg" width="300" alt="Polestar Lockscreen Widget"/>
